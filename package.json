@@ -1,0 +1,16 @@
+{
+  "name": "secret-santa-pairing",
+  "version": "1.0.0",
+  "description": "Pairing utility for Secret Santa with adult/child rules",
+  "main": "pairing.js",
+  "scripts": {
+    "start": "node run_pairing.js",
+    "test": "node --test"
+  },
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.30.0"
+  },
+  "author": "",
+  "license": "MIT"
+}

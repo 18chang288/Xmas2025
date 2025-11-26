@@ -6,3 +6,8 @@ standard_rls.sql
 
 README_DEPLOY.md
 README.md
+
+node_modules
+dist/
+.cache/
+.gh-pages-cache/

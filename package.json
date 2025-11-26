@@ -12,5 +12,8 @@
     "@supabase/supabase-js": "^2.30.0"
   },
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
+  }
 }

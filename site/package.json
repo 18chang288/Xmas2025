@@ -1,11 +1,14 @@
 {
+  "homepage": "https://18chang288.github.io/Xmas2025/",
   "name": "secret-santa-site",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.30.0",

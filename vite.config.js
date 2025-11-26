@@ -3,5 +3,8 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  base: './', // ensures assets work on GitHub Pages
+  base: '/Xmas2025/', // ensures assets work on GitHub Pages
+  build: {
+    outDir: 'docs', // output to 'docs' folder for GitHub Pages
+  },
 })

@@ -1,19 +1,22 @@
 {
-  "name": "secret-santa-pairing",
+  "homepage": "https://18chang288.github.io/Xmas2025/",
+  "name": "secret-santa-site",
   "version": "1.0.0",
-  "description": "Pairing utility for Secret Santa with adult/child rules",
-  "main": "pairing.js",
+  "private": true,
   "scripts": {
-    "start": "node run_pairing.js",
-    "test": "node --test"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
-  "type": "module",
   "dependencies": {
-    "@supabase/supabase-js": "^2.30.0"
+    "@supabase/supabase-js": "^2.30.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   },
-  "author": "",
-  "license": "MIT",
   "devDependencies": {
-    "gh-pages": "^6.3.0"
+    "@vitejs/plugin-react": "^4.7.0",
+    "vite": "^7.2.4"
   }
 }

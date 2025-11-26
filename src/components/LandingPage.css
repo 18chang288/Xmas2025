@@ -1,0 +1,81 @@
+.landing-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: url('https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif') no-repeat center center/cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-box {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 40px 30px;
+  width: 350px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.login-box h2 {
+  margin-bottom: 25px;
+  font-weight: 600;
+  color: #333;
+}
+
+.login-box input {
+  width: 100%;
+  padding: 12px 15px;
+  margin: 10px 0;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.login-box input:focus {
+  border-color: #ff4081;
+  box-shadow: 0 0 8px rgba(255, 64, 129, 0.3);
+}
+
+.login-box button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  border: none;
+  border-radius: 12px;
+  background-color: #ff4081;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.login-box button:hover {
+  background-color: #e73370;
+  transform: translateY(-2px);
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: #ff4081;
+  cursor: pointer;
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px);}
+  to { opacity: 1; transform: translateY(0);}
+}

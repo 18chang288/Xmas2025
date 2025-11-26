@@ -1,8 +1,6 @@
+import { supabase } from './supabaseClient'
+
 export default function App() {
-  return (
-    <div style={{ textAlign: 'center', marginTop: '100px' }}>
-      <h1>Hello, React is working!</h1>
-      <p>This is a minimal test to confirm deployment.</p>
-    </div>
-  )
+  console.log(supabase)
+  return <h1>Supabase loaded!</h1>
 }

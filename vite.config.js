@@ -2,9 +2,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  base: '/Xmas2025/',
   plugins: [react()],
-  server: {
-    port: 5173
-  }
+  base: './', // use relative paths for GitHub Pages
 })

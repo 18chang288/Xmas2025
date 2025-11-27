@@ -262,8 +262,10 @@ export default function SecretSantaPage({ user }) {
             />
           ))}
         </div>
+          {error && <p className="error">{error}</p>}
+      </div>
 
-            {assignedTo && (
+      {assignedTo && (
       <div className="receiverCard">
         <h2>{assignedTo}'s Wishlist 🎁</h2>
 
@@ -280,8 +282,6 @@ export default function SecretSantaPage({ user }) {
     )}
 
 
-          {error && <p className="error">{error}</p>}
-      </div>
     </div>
   );
 

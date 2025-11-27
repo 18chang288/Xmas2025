@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
+import './SecretSantaPage.css';
 
 export default function SecretSantaPage({ user }) {
   const [username, setUsername] = useState("");
@@ -9,7 +10,7 @@ export default function SecretSantaPage({ user }) {
   const [error, setError] = useState("");
 
   // ----- SET YOUR REVEAL DATE HERE (include exact time) -----
-  const [revealDate, setRevealDate] = useState(new Date("2025-12-20T18:30:00"));
+  const [revealDate, setRevealDate] = useState(new Date("2025-11-28T18:00:00"));
   const [timeLeft, setTimeLeft] = useState("");
 
   // Countdown timer
@@ -91,26 +92,40 @@ export default function SecretSantaPage({ user }) {
 
   // Auto-save wishlist to Supabase
   const saveWishlist = async (items) => {
-    try {
-      const { data: userRow } = await supabase
-        .from("users")
-        .select("id")
-        .eq("auth_uid", user.id)
-        .single();
+  try {
+    const { data: userRow, error: userErr } = await supabase
+      .from("users")
+      .select("id")
+      .eq("auth_uid", user.id)
+      .single();
 
-      await supabase
-        .from("wishlists")
-        .upsert({ user_id: userRow.id, items });
-    } catch (err) {
-      console.error("Failed to save wishlist", err);
+    if (userErr) {
+      console.error("Failed to fetch user:", userErr);
+      return;
     }
-  };
+
+    const { error } = await supabase
+      .from("wishlists")
+      .upsert(
+        { user_id: userRow.id, items },
+        { onConflict: ["user_id"] } // ensures only one wishlist per user
+      );
+
+    if (error) console.error("Failed to save wishlist:", error);
+  } catch (err) {
+    console.error("Unexpected error saving wishlist:", err);
+  }
+};
 
   const handleWishlistChange = (value, index) => {
     const newList = [...editableWishlist];
     newList[index] = value;
-    setEditableWishlist(newList);
-    saveWishlist(newList);
+
+    const trimmedList = newList.slice(0, 3);
+
+    setEditableWishlist(trimmedList);
+    setWishlist(trimmedList);
+    saveWishlist(trimmedList);
   };
 
   const addWishlistItem = () => {
@@ -122,19 +137,21 @@ export default function SecretSantaPage({ user }) {
     window.location.reload();
   };
 
+  // styles are in SecretSantaPage.css
+
   return (
-    <div style={styles.container}>
-      <button onClick={handleLogout} style={styles.logoutButton}>
+    <div className="container">
+      <button onClick={handleLogout} className="logoutButton">
         Logout
       </button>
-
-      <div style={styles.card}>
+ 
+      <div className="card">
         <h1>Welcome, {username} 🎄</h1>
 
         {assignedTo ? (
           <>
             <p>Your Secret Santa person is:</p>
-            <h2 style={{ color: "#ff4081" }}>{assignedTo}</h2>
+            <h2 className="assignedTo">{assignedTo}</h2>
           </>
         ) : (
           <>
@@ -143,7 +160,7 @@ export default function SecretSantaPage({ user }) {
           </>
         )}
 
-        <div style={styles.wishlist}>
+        <div className="wishlist">
           <h3>Your Wishlist (Top 3):</h3>
           {wishlist.length === 0 ? (
             <p>No wishlist items added.</p>
@@ -157,7 +174,7 @@ export default function SecretSantaPage({ user }) {
         </div>
 
         {/* Editable wishlist box */}
-        <div style={styles.editableWishlist}>
+        <div className="editableWishlist">
           <h3>Edit Your Wishlist:</h3>
           {editableWishlist.map((item, index) => (
             <input
@@ -165,82 +182,20 @@ export default function SecretSantaPage({ user }) {
               type="text"
               value={item}
               onChange={(e) => handleWishlistChange(e.target.value, index)}
-              style={styles.wishlistInput}
+              className="wishlistInput"
+              maxLength={100}
             />
           ))}
-          <button onClick={addWishlistItem} style={styles.addButton}>
+          {editableWishlist.length < 3 && (
+          <button onClick={() => setEditableWishlist([...editableWishlist, ""])} className="addButton">
             Add Item
           </button>
+          )}
         </div>
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+          {error && <p className="error">{error}</p>}
       </div>
     </div>
   );
+
 }
-
-// Styling
-const styles = {
-  container: {
-    position: "relative",
-    width: "100vw",
-    height: "100vh",
-    background: "url('/background.jpg') center/cover no-repeat",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    overflowY: "auto",
-    padding: "20px",
-  },
-
-  logoutButton: {
-    position: "absolute",
-    top: 20,
-    right: 20,
-    padding: "10px 18px",
-    background: "#ff4081",
-    color: "white",
-    border: "none",
-    borderRadius: "10px",
-    cursor: "pointer",
-    fontWeight: "bold",
-  },
-
-  card: {
-    background: "rgba(255,255,255,0.9)",
-    padding: "40px",
-    borderRadius: "20px",
-    width: "400px",
-    maxWidth: "100%",
-    textAlign: "center",
-    boxShadow: "0 8px 25px rgba(0,0,0,0.3)",
-  },
-
-  wishlist: {
-    marginTop: "20px",
-    textAlign: "left",
-  },
-
-  editableWishlist: {
-    marginTop: "20px",
-    textAlign: "left",
-  },
-
-  wishlistInput: {
-    width: "100%",
-    padding: "8px",
-    marginBottom: "5px",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-  },
-
-  addButton: {
-    marginTop: "5px",
-    padding: "8px 12px",
-    border: "none",
-    borderRadius: "8px",
-    background: "#ff4081",
-    color: "white",
-    cursor: "pointer",
-  },
-};

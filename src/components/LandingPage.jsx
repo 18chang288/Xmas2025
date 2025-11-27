@@ -1,10 +1,9 @@
 import React, { useState } from 'react'
 import './LandingPage.css'
 
-export default function LandingPage({ onLogin, onSignup }) {
+export default function LandingPage({ onLogin }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -14,11 +13,7 @@ export default function LandingPage({ onLogin, onSignup }) {
     setError('')
 
     try {
-      if (isLogin) {
-        await onLogin(username, password)
-      } else {
-        await onSignup(username, password)
-      }
+      await onLogin(username, password)
     } catch (err) {
       setError(err.message || 'Something went wrong')
     } finally {
@@ -46,21 +41,11 @@ export default function LandingPage({ onLogin, onSignup }) {
             required
           />
           <button type="submit" disabled={loading}>
-            {isLogin ? 'Sign In' : 'Sign Up'}
+            Sign In
           </button>
           {error && <p className="error">{error}</p>}
         </form>
-        <p style={{ marginTop: '10px' }}>
-          {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
-          <button
-            type="button"
-            className="toggle-btn"
-            onClick={() => setIsLogin(!isLogin)}
-          >
-            {isLogin ? 'Sign Up' : 'Sign In'}
-          </button>
-        </p>
-      </div>
+      </div>     
     </div>
   )
 }

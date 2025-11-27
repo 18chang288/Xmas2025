@@ -2,11 +2,12 @@
   position: relative;
   width: 100vw;
   height: 100vh;
-  background: url('https://media.giphy.com/media/26tn33aiTi1jkl6H6/giphy.gif') no-repeat center center/cover;
+  background: url('') no-repeat center center/cover;
   display: flex;
   justify-content: center;
   align-items: center;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden; /* Prevents scrollbars */
 }
 
 .login-box {
@@ -15,6 +16,7 @@
   border-radius: 20px;
   padding: 40px 30px;
   width: 350px;
+  max-width: 90%; /* Responsive on small screens */
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
   text-align: center;
   animation: fadeIn 1s ease-in-out;
@@ -35,6 +37,7 @@
   font-size: 16px;
   outline: none;
   transition: all 0.3s ease;
+  box-sizing: border-box; /* This is the key fix! */
 }
 
 .login-box input:focus {
@@ -53,6 +56,7 @@
   font-size: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-sizing: border-box; /* Also here for consistency */
 }
 
 .login-box button:hover {
@@ -73,6 +77,7 @@
   cursor: pointer;
   font-weight: bold;
   text-decoration: underline;
+  margin-top: 10px;
 }
 
 @keyframes fadeIn {

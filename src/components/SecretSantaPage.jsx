@@ -4,14 +4,15 @@ import { supabase } from "../supabaseClient";
 export default function SecretSantaPage({ user }) {
   const [username, setUsername] = useState("");
   const [wishlist, setWishlist] = useState([]);
+  const [editableWishlist, setEditableWishlist] = useState([]);
   const [assignedTo, setAssignedTo] = useState(null);
   const [error, setError] = useState("");
 
-  // ----- SET YOUR REVEAL DATE HERE -----
-  const revealDate = new Date("2025-12-20T00:00:00");
+  // ----- SET YOUR REVEAL DATE HERE (include exact time) -----
+  const [revealDate, setRevealDate] = useState(new Date("2025-12-20T18:30:00"));
   const [timeLeft, setTimeLeft] = useState("");
 
-  // Timer logic
+  // Countdown timer
   useEffect(() => {
     function updateTimer() {
       const now = new Date();
@@ -33,13 +34,12 @@ export default function SecretSantaPage({ user }) {
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [revealDate]);
 
   // Fetch username + wishlist + pairing
   useEffect(() => {
     const fetchInfo = async () => {
       try {
-        // 1) Fetch user row using auth_uid
         const { data: userRow, error: userErr } = await supabase
           .from("users")
           .select("*")
@@ -53,7 +53,7 @@ export default function SecretSantaPage({ user }) {
 
         setUsername(userRow.username);
 
-        // 2) Fetch wishlist
+        // Fetch wishlist
         const { data: wishlistData } = await supabase
           .from("wishlists")
           .select("items")
@@ -61,10 +61,11 @@ export default function SecretSantaPage({ user }) {
           .single();
 
         if (wishlistData?.items) {
-          setWishlist(wishlistData.items.slice(0, 3)); // top 3
+          setWishlist(wishlistData.items.slice(0, 3));
+          setEditableWishlist(wishlistData.items.slice(0, 3));
         }
 
-        // 3) Fetch pairing (only if revealed)
+        // Fetch pairing (if revealed)
         const { data: pairing } = await supabase
           .from("pairings")
           .select("receiver_id, revealed")
@@ -72,7 +73,6 @@ export default function SecretSantaPage({ user }) {
           .single();
 
         if (pairing && pairing.revealed) {
-          // Fetch receiver username
           const { data: receiver } = await supabase
             .from("users")
             .select("username")
@@ -89,7 +89,34 @@ export default function SecretSantaPage({ user }) {
     fetchInfo();
   }, [user.id]);
 
-  // Logout
+  // Auto-save wishlist to Supabase
+  const saveWishlist = async (items) => {
+    try {
+      const { data: userRow } = await supabase
+        .from("users")
+        .select("id")
+        .eq("auth_uid", user.id)
+        .single();
+
+      await supabase
+        .from("wishlists")
+        .upsert({ user_id: userRow.id, items });
+    } catch (err) {
+      console.error("Failed to save wishlist", err);
+    }
+  };
+
+  const handleWishlistChange = (value, index) => {
+    const newList = [...editableWishlist];
+    newList[index] = value;
+    setEditableWishlist(newList);
+    saveWishlist(newList);
+  };
+
+  const addWishlistItem = () => {
+    setEditableWishlist([...editableWishlist, ""]);
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.reload();
@@ -128,12 +155,31 @@ export default function SecretSantaPage({ user }) {
             </ul>
           )}
         </div>
+
+        {/* Editable wishlist box */}
+        <div style={styles.editableWishlist}>
+          <h3>Edit Your Wishlist:</h3>
+          {editableWishlist.map((item, index) => (
+            <input
+              key={index}
+              type="text"
+              value={item}
+              onChange={(e) => handleWishlistChange(e.target.value, index)}
+              style={styles.wishlistInput}
+            />
+          ))}
+          <button onClick={addWishlistItem} style={styles.addButton}>
+            Add Item
+          </button>
+        </div>
+
+        {error && <p style={{ color: "red" }}>{error}</p>}
       </div>
     </div>
   );
 }
 
-// styling
+// Styling
 const styles = {
   container: {
     position: "relative",
@@ -143,6 +189,8 @@ const styles = {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
+    overflowY: "auto",
+    padding: "20px",
   },
 
   logoutButton: {
@@ -163,6 +211,7 @@ const styles = {
     padding: "40px",
     borderRadius: "20px",
     width: "400px",
+    maxWidth: "100%",
     textAlign: "center",
     boxShadow: "0 8px 25px rgba(0,0,0,0.3)",
   },
@@ -170,5 +219,28 @@ const styles = {
   wishlist: {
     marginTop: "20px",
     textAlign: "left",
+  },
+
+  editableWishlist: {
+    marginTop: "20px",
+    textAlign: "left",
+  },
+
+  wishlistInput: {
+    width: "100%",
+    padding: "8px",
+    marginBottom: "5px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+  },
+
+  addButton: {
+    marginTop: "5px",
+    padding: "8px 12px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#ff4081",
+    color: "white",
+    cursor: "pointer",
   },
 };

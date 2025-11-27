@@ -12,7 +12,19 @@ export default function SecretSantaPage({ user }) {
   // ----- SET YOUR REVEAL DATE HERE (include exact time) -----
   const [revealDate, setRevealDate] = useState(new Date("2025-11-27T18:00:00"));
   const [timeLeft, setTimeLeft] = useState("");
-  const snowflakes = Array.from({ length: 50 }); // for snow effect
+  const [snowflakes, setSnowflakes] = useState([]);
+
+  useEffect(() => {
+  const flakes = Array.from({ length: 50 }).map(() => ({
+    left: Math.random() * window.innerWidth,
+    size: 2 + Math.random() * 6,
+    opacity: 0.3 + Math.random() * 0.5,
+    duration: 5 + Math.random() * 10,
+    delay: Math.random() * 10
+  }));
+  setSnowflakes(flakes);
+}, []); // empty dependency array = run once on mount
+
 
   // Countdown timer
   useEffect(() => {
@@ -148,24 +160,25 @@ export default function SecretSantaPage({ user }) {
     <div className="container">
       <button onClick={handleLogout} className="logoutButton">
         Logout
-      </button>
+      </button>A
 
       <div className="snow">
-        {snowflakes.map((_, i) => (
+        {snowflakes.map((flake, i) => (
           <div
             key={i}
             className="snowflake"
             style={{
-              left: Math.random() * window.innerWidth + "px",
-              animationDuration: 5 + Math.random() * 5 + "s", // 5-10s fall
-              animationDelay: Math.random() * 10 + "s",
-              width: 2 + Math.random() * 6 + "px",
-              height: 2 + Math.random() * 6 + "px",
-              opacity: 0.3 + Math.random() * 0.5
+              left: `${flake.left}px`,
+              width: `${flake.size}px`,
+              height: `${flake.size}px`,
+              opacity: flake.opacity,
+              animationDuration: `${flake.duration}s`,
+              animationDelay: `${flake.delay}s`
             }}
           />
         ))}
       </div>
+
  
       <div className="card">
         <h1>Welcome, {username} 🎄</h1>

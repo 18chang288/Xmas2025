@@ -124,6 +124,8 @@ export default function SecretSantaPage({ user }) {
   try {
     const usernameFromEmail = user.email?.split("@")[0] || "";
     
+    console.log("Saving wishlist for user:", usernameFromEmail, "Items:", items);
+    
     const { data: userRow, error: userErr } = await supabase
       .from("users")
       .select("id")
@@ -135,14 +137,36 @@ export default function SecretSantaPage({ user }) {
       return;
     }
 
-    const { error } = await supabase
-      .from("wishlists")
-      .upsert(
-        { user_id: userRow.id, items },
-        { onConflict: ["user_id"] }
-      );
+    console.log("Found user ID:", userRow.id);
 
-    if (error) console.error("Failed to save wishlist:", error);
+    // First, try to fetch existing wishlist
+    const { data: existingWishlist } = await supabase
+      .from("wishlists")
+      .select("id")
+      .eq("user_id", userRow.id)
+      .single();
+
+    let result;
+    if (existingWishlist) {
+      // Update existing wishlist
+      console.log("Updating existing wishlist...");
+      result = await supabase
+        .from("wishlists")
+        .update({ items: items, updated_at: new Date().toISOString() })
+        .eq("user_id", userRow.id);
+    } else {
+      // Insert new wishlist
+      console.log("Creating new wishlist...");
+      result = await supabase
+        .from("wishlists")
+        .insert({ user_id: userRow.id, items: items });
+    }
+
+    if (result.error) {
+      console.error("Failed to save wishlist:", result.error);
+    } else {
+      console.log("Wishlist saved successfully:", result.data);
+    }
   } catch (err) {
     console.error("Unexpected error saving wishlist:", err);
   }

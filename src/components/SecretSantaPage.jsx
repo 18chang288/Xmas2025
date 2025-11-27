@@ -58,6 +58,13 @@ export default function SecretSantaPage({ user }) {
         const usernameFromEmail = user.email?.split("@")[0] || "";
         
         console.log("Fetching user profile for username:", usernameFromEmail);
+        console.log("User auth object:", { id: user.id, email: user.email });
+
+        // Debug: check all users in the database
+        const { data: allUsers } = await supabase
+          .from("users")
+          .select("id, username, email");
+        console.log("All users in database:", allUsers);
         
         const { data: userRow, error: userErr } = await supabase
           .from("users")

@@ -54,14 +54,20 @@ export default function SecretSantaPage({ user }) {
   useEffect(() => {
     const fetchInfo = async () => {
       try {
+        // Extract username from email (e.g., john@example.com → john)
+        const usernameFromEmail = user.email?.split("@")[0] || "";
+        
         const { data: userRow, error: userErr } = await supabase
           .from("users")
           .select("*")
-          .eq("auth_uid", user.id)
+          .eq("username", usernameFromEmail)
           .single();
 
         if (userErr) {
-          setError("Could not load user profile.");
+          console.error("Failed to load user profile:", userErr);
+          setUsername(usernameFromEmail);
+          setWishlist(["", "", ""]);
+          setEditableWishlist(["", "", ""]);
           return;
         }
 
@@ -102,24 +108,30 @@ export default function SecretSantaPage({ user }) {
           setAssignedTo(receiver?.username || "Unknown");
         }
       } catch (err) {
-        setError("An unexpected error occurred.");
+        console.error("Unexpected error:", err);
+        const usernameFromEmail = user.email?.split("@")[0] || "User";
+        setUsername(usernameFromEmail);
+        setWishlist(["", "", ""]);
+        setEditableWishlist(["", "", ""]);
       }
     };
 
     fetchInfo();
-  }, [user.id]);
+  }, [user.id, user.email]);
 
   // Auto-save wishlist to Supabase
   const saveWishlist = async (items) => {
   try {
+    const usernameFromEmail = user.email?.split("@")[0] || "";
+    
     const { data: userRow, error: userErr } = await supabase
       .from("users")
       .select("id")
-      .eq("auth_uid", user.id)
+      .eq("username", usernameFromEmail)
       .single();
 
     if (userErr) {
-      console.error("Failed to fetch user:", userErr);
+      console.error("Failed to fetch user for saving:", userErr);
       return;
     }
 
@@ -127,7 +139,7 @@ export default function SecretSantaPage({ user }) {
       .from("wishlists")
       .upsert(
         { user_id: userRow.id, items },
-        { onConflict: ["user_id"] } // ensures only one wishlist per user
+        { onConflict: ["user_id"] }
       );
 
     if (error) console.error("Failed to save wishlist:", error);

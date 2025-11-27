@@ -160,7 +160,7 @@ export default function SecretSantaPage({ user }) {
     <div className="container">
       <button onClick={handleLogout} className="logoutButton">
         Logout
-      </button>A
+      </button>
 
       <div className="snow">
         {snowflakes.map((flake, i) => (

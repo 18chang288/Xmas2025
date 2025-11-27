@@ -58,15 +58,6 @@ export default function SecretSantaPage({ user }) {
         // Extract username from email (e.g., john@example.com → john)
         const usernameFromEmail = user.email?.split("@")[0] || "";
         
-        console.log("Fetching user profile for username:", usernameFromEmail);
-        console.log("User auth object:", { id: user.id, email: user.email });
-
-        // Debug: check all users in the database
-        const { data: allUsers } = await supabase
-          .from("users")
-          .select("id, username, email");
-        console.log("All users in database:", allUsers);
-        
         const { data: userRow, error: userErr } = await supabase
           .from("users")
           .select("*")
@@ -74,7 +65,6 @@ export default function SecretSantaPage({ user }) {
           .maybeSingle();
 
         if (userErr || !userRow) {
-          console.error("Failed to load user profile:", userErr);
           setUsername(usernameFromEmail);
           setUserId(null);
           setWishlist(["", "", ""]);
@@ -120,7 +110,6 @@ export default function SecretSantaPage({ user }) {
           setAssignedTo(receiver?.username || "Unknown");
         }
       } catch (err) {
-        console.error("Unexpected error:", err);
         const usernameFromEmail = user.email?.split("@")[0] || "User";
         setUsername(usernameFromEmail);
         setWishlist(["", "", ""]);
@@ -135,11 +124,8 @@ export default function SecretSantaPage({ user }) {
   const saveWishlist = async (items) => {
   try {
     if (!userId) {
-      console.warn("User ID not available yet, skipping save");
       return;
     }
-    
-    console.log("Saving wishlist for user ID:", userId, "Items:", items);
 
     // First, try to fetch existing wishlist
     const { data: existingWishlist } = await supabase
@@ -151,14 +137,12 @@ export default function SecretSantaPage({ user }) {
     let result;
     if (existingWishlist) {
       // Update existing wishlist
-      console.log("Updating existing wishlist...");
       result = await supabase
         .from("wishlists")
         .update({ items: items, updated_at: new Date().toISOString() })
         .eq("user_id", userId);
     } else {
       // Insert new wishlist
-      console.log("Creating new wishlist...");
       result = await supabase
         .from("wishlists")
         .insert({ user_id: userId, items: items });
@@ -166,8 +150,6 @@ export default function SecretSantaPage({ user }) {
 
     if (result.error) {
       console.error("Failed to save wishlist:", result.error);
-    } else {
-      console.log("Wishlist saved successfully:", result.data);
     }
   } catch (err) {
     console.error("Unexpected error saving wishlist:", err);

@@ -56,7 +56,8 @@ export default function SecretSantaPage({ user }) {
     const fetchInfo = async () => {
       try {
         // Extract username from email (e.g., john@example.com → john)
-        const usernameFromEmail = user.email?.split("@")[0] || "";
+        let usernameFromEmail = user.email?.split("@")[0] || "";
+        usernameFromEmail = usernameFromEmail.toLowerCase();
         
         const { data: userRow, error: userErr } = await supabase
           .from("users")

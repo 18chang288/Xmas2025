@@ -280,9 +280,6 @@ export default function SecretSantaPage({ user }) {
         )}
       </div>
     )}
-
-
     </div>
   );
-
 }

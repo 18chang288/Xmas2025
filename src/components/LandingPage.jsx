@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import './LandingPage.css'
+import { supabase } from '../supabaseClient'
 
 export default function LandingPage({ onLogin }) {
   const [username, setUsername] = useState('')

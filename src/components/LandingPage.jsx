@@ -35,6 +35,12 @@ export default function LandingPage({ onLogin }) {
 
   return (
     <div className="landing-container">
+
+    <video autoPlay loop muted playsInline className="background-video">
+      <source src="https://iwjndimieirsyghavryr.supabase.co/storage/v1/object/public/xmas_pic/gif1.mp4" type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+
       <div className="login-box">
         <h2>Secret Santa</h2>
         <form onSubmit={handleSubmit}>

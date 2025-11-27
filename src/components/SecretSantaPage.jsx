@@ -57,13 +57,15 @@ export default function SecretSantaPage({ user }) {
         // Extract username from email (e.g., john@example.com → john)
         const usernameFromEmail = user.email?.split("@")[0] || "";
         
+        console.log("Fetching user profile for username:", usernameFromEmail);
+        
         const { data: userRow, error: userErr } = await supabase
           .from("users")
           .select("*")
           .eq("username", usernameFromEmail)
-          .single();
+          .maybeSingle();
 
-        if (userErr) {
+        if (userErr || !userRow) {
           console.error("Failed to load user profile:", userErr);
           setUsername(usernameFromEmail);
           setWishlist(["", "", ""]);
@@ -78,7 +80,7 @@ export default function SecretSantaPage({ user }) {
           .from("wishlists")
           .select("items")
           .eq("user_id", userRow.id)
-          .single();
+          .maybeSingle();
 
         if (wishlistData?.items) {
           const top3 = wishlistData.items.slice(0, 3);
@@ -96,14 +98,14 @@ export default function SecretSantaPage({ user }) {
           .from("pairings")
           .select("receiver_id, revealed")
           .eq("giver_id", userRow.id)
-          .single();
+          .maybeSingle();
 
         if (pairing && pairing.revealed) {
           const { data: receiver } = await supabase
             .from("users")
             .select("username")
             .eq("id", pairing.receiver_id)
-            .single();
+            .maybeSingle();
 
           setAssignedTo(receiver?.username || "Unknown");
         }
@@ -130,9 +132,9 @@ export default function SecretSantaPage({ user }) {
       .from("users")
       .select("id")
       .eq("username", usernameFromEmail)
-      .single();
+      .maybeSingle();
 
-    if (userErr) {
+    if (userErr || !userRow) {
       console.error("Failed to fetch user for saving:", userErr);
       return;
     }
@@ -144,7 +146,7 @@ export default function SecretSantaPage({ user }) {
       .from("wishlists")
       .select("id")
       .eq("user_id", userRow.id)
-      .single();
+      .maybeSingle();
 
     let result;
     if (existingWishlist) {

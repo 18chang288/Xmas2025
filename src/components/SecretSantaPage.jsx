@@ -9,6 +9,7 @@ export default function SecretSantaPage({ user }) {
   const [editableWishlist, setEditableWishlist] = useState([]);
   const [assignedTo, setAssignedTo] = useState(null);
   const [error, setError] = useState("");
+  const [receiverWishlist, setReceiverWishlist] = useState([]);
 
   // ----- SET YOUR REVEAL DATE HERE (include exact time) -----
   const [revealDate, setRevealDate] = useState(new Date("2025-11-27T18:00:00"));
@@ -102,24 +103,42 @@ export default function SecretSantaPage({ user }) {
           .maybeSingle();
 
         if (pairing && pairing.revealed) {
-          const { data: receiver } = await supabase
-            .from("users")
-            .select("username")
-            .eq("id", pairing.receiver_id)
-            .maybeSingle();
+      const { data: receiver } = await supabase
+        .from("users")
+        .select("id, username")
+        .eq("id", pairing.receiver_id)
+        .maybeSingle();
 
-          setAssignedTo(receiver?.username || "Unknown");
+      if (receiver) {
+        setAssignedTo(receiver.username);
+
+        // fetch receiver wishlist
+        const { data: rWish } = await supabase
+          .from("wishlists")
+          .select("items")
+          .eq("user_id", receiver.id)
+          .maybeSingle();
+
+        if (rWish?.items) {
+          const top3 = rWish.items.slice(0, 3);
+          while (top3.length < 3) top3.push("");
+          setReceiverWishlist(top3);
+        } else {
+          setReceiverWishlist(["", "", ""]);
         }
-      } catch (err) {
-        const usernameFromEmail = user.email?.split("@")[0] || "User";
-        setUsername(usernameFromEmail);
-        setWishlist(["", "", ""]);
-        setEditableWishlist(["", "", ""]);
       }
-    };
+    }
 
-    fetchInfo();
-  }, [user.id, user.email]);
+          } catch (err) {
+            const usernameFromEmail = user.email?.split("@")[0] || "User";
+            setUsername(usernameFromEmail);
+            setWishlist(["", "", ""]);
+            setEditableWishlist(["", "", ""]);
+          }
+        };
+
+        fetchInfo();
+      }, [user.id, user.email]);
 
   // Auto-save wishlist to Supabase
   const saveWishlist = async (items) => {
@@ -178,7 +197,7 @@ export default function SecretSantaPage({ user }) {
   // styles are in SecretSantaPage.css
 
   return (
-    <div className="container">
+    <div className="container twoColumnLayout">
       <button onClick={handleLogout} className="logoutButton">
         Logout
       </button>
@@ -243,6 +262,23 @@ export default function SecretSantaPage({ user }) {
             />
           ))}
         </div>
+
+            {assignedTo && (
+      <div className="receiverCard">
+        <h2>{assignedTo}'s Wishlist 🎁</h2>
+
+        {receiverWishlist.length === 0 ? (
+          <p>No wishlist available.</p>
+        ) : (
+          <ul>
+            {receiverWishlist.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    )}
+
 
           {error && <p className="error">{error}</p>}
       </div>

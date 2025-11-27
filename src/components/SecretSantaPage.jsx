@@ -4,6 +4,7 @@ import './SecretSantaPage.css';
 
 export default function SecretSantaPage({ user }) {
   const [username, setUsername] = useState("");
+  const [userId, setUserId] = useState(null); // Store the database user ID
   const [wishlist, setWishlist] = useState([]);
   const [editableWishlist, setEditableWishlist] = useState([]);
   const [assignedTo, setAssignedTo] = useState(null);
@@ -75,12 +76,14 @@ export default function SecretSantaPage({ user }) {
         if (userErr || !userRow) {
           console.error("Failed to load user profile:", userErr);
           setUsername(usernameFromEmail);
+          setUserId(null);
           setWishlist(["", "", ""]);
           setEditableWishlist(["", "", ""]);
           return;
         }
 
         setUsername(userRow.username);
+        setUserId(userRow.id); // Store the user ID for later use
 
         // Fetch wishlist
         const { data: wishlistData } = await supabase
@@ -131,28 +134,18 @@ export default function SecretSantaPage({ user }) {
   // Auto-save wishlist to Supabase
   const saveWishlist = async (items) => {
   try {
-    const usernameFromEmail = user.email?.split("@")[0] || "";
-    
-    console.log("Saving wishlist for user:", usernameFromEmail, "Items:", items);
-    
-    const { data: userRow, error: userErr } = await supabase
-      .from("users")
-      .select("id")
-      .eq("username", usernameFromEmail)
-      .maybeSingle();
-
-    if (userErr || !userRow) {
-      console.error("Failed to fetch user for saving:", userErr);
+    if (!userId) {
+      console.warn("User ID not available yet, skipping save");
       return;
     }
-
-    console.log("Found user ID:", userRow.id);
+    
+    console.log("Saving wishlist for user ID:", userId, "Items:", items);
 
     // First, try to fetch existing wishlist
     const { data: existingWishlist } = await supabase
       .from("wishlists")
       .select("id")
-      .eq("user_id", userRow.id)
+      .eq("user_id", userId)
       .maybeSingle();
 
     let result;
@@ -162,13 +155,13 @@ export default function SecretSantaPage({ user }) {
       result = await supabase
         .from("wishlists")
         .update({ items: items, updated_at: new Date().toISOString() })
-        .eq("user_id", userRow.id);
+        .eq("user_id", userId);
     } else {
       // Insert new wishlist
       console.log("Creating new wishlist...");
       result = await supabase
         .from("wishlists")
-        .insert({ user_id: userRow.id, items: items });
+        .insert({ user_id: userId, items: items });
     }
 
     if (result.error) {

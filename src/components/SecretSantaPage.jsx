@@ -63,8 +63,14 @@ export default function SecretSantaPage({ user }) {
           .single();
 
         if (wishlistData?.items) {
-          setWishlist(wishlistData.items.slice(0, 3));
-          setEditableWishlist(wishlistData.items.slice(0, 3));
+          const top3 = wishlistData.items.slice(0, 3);
+          while (top3.length < 3) top3.push("");
+          setWishlist(top3);
+          setEditableWishlist(top3);
+        }
+        else {
+          setWishlist(["", "", ""]);
+          setEditableWishlist(["", "", ""]);
         }
 
         // Fetch pairing (if revealed)
@@ -122,11 +128,9 @@ export default function SecretSantaPage({ user }) {
     const newList = [...editableWishlist];
     newList[index] = value;
 
-    const trimmedList = newList.slice(0, 3);
-
-    setEditableWishlist(trimmedList);
-    setWishlist(trimmedList);
-    saveWishlist(trimmedList);
+    setEditableWishlist(newList);
+    setWishlist(newList);
+    saveWishlist(newList);
   };
 
   const addWishlistItem = () => {
@@ -204,11 +208,6 @@ export default function SecretSantaPage({ user }) {
               maxLength={100}
             />
           ))}
-          {editableWishlist.length < 3 && (
-          <button onClick={() => setEditableWishlist([...editableWishlist, ""])} className="addButton">
-            Add Item
-          </button>
-          )}
         </div>
 
           {error && <p className="error">{error}</p>}

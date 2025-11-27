@@ -26,6 +26,7 @@ export default function LandingPage({ onLogin }) {
       }
       onLogin(data.user);
     } catch (err) {
+      console.error(err);
       setError('An unexpected error occurred.');
     } finally {
       setLoading(false);

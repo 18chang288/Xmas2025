@@ -35,12 +35,14 @@ export default function LandingPage({ onLogin }) {
 
   return (
     <div className="landing-container">
+    <div className="left-side">
+      <video autoPlay loop muted playsInline className="background-video">
+        <source src="https://iwjndimieirsyghavryr.supabase.co/storage/v1/object/public/xmas_pic/gif1.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
+    </div>
 
-    <video autoPlay loop muted playsInline className="background-video">
-      <source src="https://iwjndimieirsyghavryr.supabase.co/storage/v1/object/public/xmas_pic/gif1.mp4" type="video/mp4" />
-      Your browser does not support the video tag.
-    </video>
-
+      <div className="right-side">
       <div className="login-box">
         <h2>Secret Santa</h2>
         <form onSubmit={handleSubmit}>
@@ -64,6 +66,7 @@ export default function LandingPage({ onLogin }) {
           {error && <p className="error">{error}</p>}
         </form>
       </div>     
+      </div>
     </div>
   )
 }

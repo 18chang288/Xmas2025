@@ -11,9 +11,23 @@
   overflow: hidden; /* Prevents scrollbars */
 }
 
+.left-side {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.right-side {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .background-video {
   width: auto;
-  height: 80%;
+  height: 100%;
   object-fit: cover;
   z-index: -1; /* Ensure video is behind other content */
 }

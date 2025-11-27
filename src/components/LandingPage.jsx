@@ -13,11 +13,22 @@ export default function LandingPage({ onLogin }) {
     setError('')
 
     try {
-      await onLogin(username, password)
+      const email = `${username}@example.com`;
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      onLogin(data.user);
     } catch (err) {
-      setError(err.message || 'Something went wrong')
+      setError('An unexpected error occurred.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 

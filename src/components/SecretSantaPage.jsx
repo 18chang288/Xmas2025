@@ -132,6 +132,12 @@ useEffect(() => {
             }
           }
 
+          console.log("pairings:", pairings);
+          console.log("receivers:", receivers);
+          console.log("adultReceiver:", adultReceiver);
+          console.log("childReceivers:", childReceivers);
+
+
           // Optional: set children receivers if you want to display them
           if (childReceivers.length > 0) {
             const childWishlists = await Promise.all(
@@ -162,13 +168,6 @@ useEffect(() => {
 
   fetchInfo();
 }, [user.id, user.email]);
-
-console.log("pairings:", pairings);
-console.log("receivers:", receivers);
-console.log("adultReceiver:", adultReceiver);
-console.log("childReceivers:", childReceivers);
-
-
 
   // Auto-save wishlist to Supabase
   const saveWishlist = async (items) => {

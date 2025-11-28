@@ -10,6 +10,7 @@ export default function SecretSantaPage({ user }) {
   const [assignedTo, setAssignedTo] = useState(null);
   const [error, setError] = useState("");
   const [receiverWishlist, setReceiverWishlist] = useState([]);
+  const [childrenReceivers, setChildrenReceivers] = useState([]);
 
   // ----- SET YOUR REVEAL DATE HERE (include exact time) -----
   const [revealDate, setRevealDate] = useState(new Date("2025-11-27T18:00:00"));
@@ -144,7 +145,9 @@ useEffect(() => {
               })
             );
             // Store in a state if you want to render separately
-            // setChildrenReceivers(childWishlists);
+            setChildrenReceivers(childWishlists);
+          } else {
+            setChildrenReceivers([]);
           }
         }
       }

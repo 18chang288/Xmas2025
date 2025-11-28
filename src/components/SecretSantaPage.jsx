@@ -163,6 +163,12 @@ useEffect(() => {
   fetchInfo();
 }, [user.id, user.email]);
 
+console.log("pairings:", pairings);
+console.log("receivers:", receivers);
+console.log("adultReceiver:", adultReceiver);
+console.log("childReceivers:", childReceivers);
+
+
 
   // Auto-save wishlist to Supabase
   const saveWishlist = async (items) => {

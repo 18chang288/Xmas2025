@@ -104,8 +104,7 @@ useEffect(() => {
 
         // Fetch all receiver users
         const { data: receivers } = await supabase
-          .from("public_revealed_recipients")
-          .select("*")
+        .rpc("get_my_recipients");
 
         if (receivers?.length > 0) {
           // Separate adult and child receivers

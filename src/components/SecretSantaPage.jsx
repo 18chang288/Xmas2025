@@ -53,14 +53,13 @@ export default function SecretSantaPage({ user }) {
     return () => clearInterval(interval);
   }, [revealDate]);
 
-  // Fetch username + wishlist + all pairings
-useEffect(() => {
+  useEffect(() => {
   const fetchInfo = async () => {
     try {
-      // Use auth UID instead of parsing email (safer)
+      // Get the current user row
       const { data: userRow, error: userErr } = await supabase
         .from("users")
-        .select("*")
+        .select("id, username")
         .eq("auth_uid", user.id)
         .maybeSingle();
 
@@ -75,85 +74,51 @@ useEffect(() => {
       setUsername(userRow.username);
       setUserId(userRow.id);
 
-      // Fetch wishlist
+      // Fetch user's own wishlist
       const { data: wishlistData } = await supabase
         .from("wishlists")
         .select("items")
         .eq("user_id", userRow.id)
         .maybeSingle();
 
-      if (wishlistData?.items) {
-        const top3 = wishlistData.items.slice(0, 3);
-        while (top3.length < 3) top3.push("");
-        setWishlist(top3);
-        setEditableWishlist(top3);
-      } else {
-        setWishlist(["", "", ""]);
-        setEditableWishlist(["", "", ""]);
-      }
+      const top3Wishlist = wishlistData?.items?.slice(0, 3) || [];
+      while (top3Wishlist.length < 3) top3Wishlist.push("");
+      setWishlist(top3Wishlist);
+      setEditableWishlist([...top3Wishlist]);
 
-      // Fetch all revealed pairings for this user
-      const { data: pairings } = await supabase
-        .from("pairings")
-        .select("receiver_id")
-        .eq("giver_id", userRow.id)
-        .eq("revealed", true);
+      // Fetch recipients assigned to this user (revealed pairings)
+      const { data: receivers } = await supabase
+        .rpc("get_my_recipients"); // RPC should already filter by giver
 
-      if (pairings?.length > 0) {
-        const receiverIds = pairings.map(p => p.receiver_id);
-
-        // Fetch all receiver users
-        const { data: receivers } = await supabase
-        .rpc("get_my_recipients");
-
-        if (receivers?.length > 0) {
-          // Separate adult and child receivers
-          const adultReceiver = receivers.find(r => r.role === 'adult');
-          const childReceivers = receivers.filter(r => r.role === 'child');
-
-          // Set adult assignment and wishlist
-          if (adultReceiver) {
-            setAssignedTo(adultReceiver.username);
-
-            const { data: adultWishlist } = await supabase
+      if (receivers?.length > 0) {
+        // Map to only username + wishlist
+        const recipientData = await Promise.all(
+          receivers.map(async r => {
+            const { data: w } = await supabase
               .from("wishlists")
               .select("items")
-              .eq("user_id", adultReceiver.id)
+              .eq("user_id", r.user_id)
               .maybeSingle();
 
-            if (adultWishlist?.items) {
-              const top3 = adultWishlist.items.slice(0, 3);
-              while (top3.length < 3) top3.push("");
-              setReceiverWishlist(top3);
-            } else {
-              setReceiverWishlist(["", "", ""]);
-            }
-          }
+            const wishlist = w?.items?.slice(0, 3) || [];
+            while (wishlist.length < 3) wishlist.push("");
 
-          console.log("pairings:", pairings);
-          console.log("receivers:", receivers);
-          console.log("adultReceiver:", adultReceiver);
-          console.log("childReceivers:", childReceivers);
+            return {
+              username: r.username,
+              wishlist
+            };
+          })
+        );
 
+        // Separate adult vs children if needed
+        const adult = recipientData.find(r => receivers.find(rec => rec.user_id === r.user_id)?.role === 'adult');
+        const children = recipientData.filter(r => receivers.find(rec => rec.user_id === r.user_id)?.role === 'child');
 
-          // Optional: set children receivers if you want to display them
-          if (childReceivers.length > 0) {
-            const childWishlists = await Promise.all(
-              childReceivers.map(async c => {
-                const { data: w } = await supabase
-                  .from("wishlists")
-                  .select("items")
-                  .eq("user_id", c.id)
-                  .maybeSingle();
-                return { id: c.id, username: c.username, items: w?.items || [] };
-              })
-            );
-            // Store in a state if you want to render separately
-            setChildrenReceivers(childWishlists);
-          } else {
-            setChildrenReceivers([]);
-          }
-        }
+        if (adult) setReceiverWishlist(adult.wishlist);
+        setChildrenReceivers(children);
+      } else {
+        setReceiverWishlist(["", "", ""]);
+        setChildrenReceivers([]);
       }
 
     } catch (err) {
@@ -161,11 +126,14 @@ useEffect(() => {
       setUsername(user.email?.split("@")[0] || "User");
       setWishlist(["", "", ""]);
       setEditableWishlist(["", "", ""]);
+      setReceiverWishlist(["", "", ""]);
+      setChildrenReceivers([]);
     }
   };
 
   fetchInfo();
 }, [user.id, user.email]);
+
 
   // Auto-save wishlist to Supabase
   const saveWishlist = async (items) => {

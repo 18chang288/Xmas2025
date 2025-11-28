@@ -53,10 +53,11 @@ export default function SecretSantaPage({ user }) {
     return () => clearInterval(interval);
   }, [revealDate]);
 
-  useEffect(() => {
+  // Fetch username + wishlist + all pairings
+useEffect(() => {
   const fetchInfo = async () => {
     try {
-      // 1️⃣ Fetch current user info
+      // Use auth UID instead of parsing email (safer)
       const { data: userRow, error: userErr } = await supabase
         .from("users")
         .select("*")
@@ -74,104 +75,97 @@ export default function SecretSantaPage({ user }) {
       setUsername(userRow.username);
       setUserId(userRow.id);
 
-      // 2️⃣ Fetch current user's wishlist
+      // Fetch wishlist
       const { data: wishlistData } = await supabase
         .from("wishlists")
         .select("items")
         .eq("user_id", userRow.id)
         .maybeSingle();
 
-      const top3 = wishlistData?.items?.slice(0, 3) || [];
-      while (top3.length < 3) top3.push("");
-      setWishlist(top3);
-      setEditableWishlist(top3);
+      if (wishlistData?.items) {
+        const top3 = wishlistData.items.slice(0, 3);
+        while (top3.length < 3) top3.push("");
+        setWishlist(top3);
+        setEditableWishlist(top3);
+      } else {
+        setWishlist(["", "", ""]);
+        setEditableWishlist(["", "", ""]);
+      }
 
-      // 3️⃣ Fetch all revealed pairings where this user is the giver
+      // Fetch all revealed pairings for this user
       const { data: pairings } = await supabase
         .from("pairings")
         .select("receiver_id")
         .eq("giver_id", userRow.id)
         .eq("revealed", true);
 
-      if (!pairings || pairings.length === 0) {
-        setAssignedTo(null);
-        setReceiverWishlist(["", "", ""]);
-        setChildrenReceivers([]);
-        return;
+      if (pairings?.length > 0) {
+        const receiverIds = pairings.map(p => p.receiver_id);
+
+        // Fetch all receiver users
+        const { data: receivers } = await supabase
+        .rpc("get_my_recipients");
+
+        if (receivers?.length > 0) {
+          // Separate adult and child receivers
+          const adultReceiver = receivers.find(r => r.role === 'adult');
+          const childReceivers = receivers.filter(r => r.role === 'child');
+
+          // Set adult assignment and wishlist
+          if (adultReceiver) {
+            setAssignedTo(adultReceiver.username);
+
+            const { data: adultWishlist } = await supabase
+              .from("wishlists")
+              .select("items")
+              .eq("user_id", adultReceiver.id)
+              .maybeSingle();
+
+            if (adultWishlist?.items) {
+              const top3 = adultWishlist.items.slice(0, 3);
+              while (top3.length < 3) top3.push("");
+              setReceiverWishlist(top3);
+            } else {
+              setReceiverWishlist(["", "", ""]);
+            }
+          }
+
+          console.log("pairings:", pairings);
+          console.log("receivers:", receivers);
+          console.log("adultReceiver:", adultReceiver);
+          console.log("childReceivers:", childReceivers);
+
+
+          // Optional: set children receivers if you want to display them
+          if (childReceivers.length > 0) {
+            const childWishlists = await Promise.all(
+              childReceivers.map(async c => {
+                const { data: w } = await supabase
+                  .from("wishlists")
+                  .select("items")
+                  .eq("user_id", c.id)
+                  .maybeSingle();
+                return { id: c.id, username: c.username, items: w?.items || [] };
+              })
+            );
+            // Store in a state if you want to render separately
+            setChildrenReceivers(childWishlists);
+          } else {
+            setChildrenReceivers([]);
+          }
+        }
       }
-
-      const receiverIds = pairings.map(p => p.receiver_id);
-
-      // 4️⃣ Fetch all receivers' info including wishlists
-      const { data: receivers } = await supabase
-        .from("users")
-        .select("id, username, role")
-        .in("id", receiverIds);
-
-      if (!receivers || receivers.length === 0) {
-        setAssignedTo(null);
-        setReceiverWishlist(["", "", ""]);
-        setChildrenReceivers([]);
-        return;
-      }
-
-      // 5️⃣ Fetch wishlists for all receivers at once
-      const { data: allWishlists } = await supabase
-        .from("wishlists")
-        .select("user_id, items")
-        .in("user_id", receiverIds);
-
-      // 6️⃣ Merge receivers with their wishlist
-      const receiversWithWishlists = receivers.map(r => {
-        const wishlist = allWishlists?.find(w => w.user_id === r.id)?.items || [];
-        return { ...r, wishlist };
-      });
-
-      // 7️⃣ Separate adult and child
-      const adultReceiver = receiversWithWishlists.find(r => r.role === "adult");
-      const childReceivers = receiversWithWishlists.filter(r => r.role === "child");
-
-      // 8️⃣ Set state for adult receiver
-      if (adultReceiver) {
-        setAssignedTo(adultReceiver.username);
-
-        const adultTop3 = adultReceiver.wishlist.slice(0, 3);
-        while (adultTop3.length < 3) adultTop3.push("—");
-        setReceiverWishlist(adultTop3);
-      } else {
-        setAssignedTo(null);
-        setReceiverWishlist(["—", "—", "—"]);
-      }
-
-      // 9️⃣ Set state for children receivers
-      if (childReceivers.length > 0) {
-        const formattedChildren = childReceivers.map(c => ({
-          id: c.id,
-          username: c.username,
-          items: c.wishlist,
-        }));
-        setChildrenReceivers(formattedChildren);
-      } else {
-        setChildrenReceivers([]);
-      }
-
-      console.log("Pairings:", pairings);
-      console.log("Receivers with wishlists:", receiversWithWishlists);
 
     } catch (err) {
       console.error("Error fetching Secret Santa info:", err);
       setUsername(user.email?.split("@")[0] || "User");
       setWishlist(["", "", ""]);
       setEditableWishlist(["", "", ""]);
-      setAssignedTo(null);
-      setReceiverWishlist(["—", "—", "—"]);
-      setChildrenReceivers([]);
     }
   };
 
   fetchInfo();
 }, [user.id, user.email]);
-
 
   // Auto-save wishlist to Supabase
   const saveWishlist = async (items) => {

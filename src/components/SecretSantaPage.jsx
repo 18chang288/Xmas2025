@@ -99,17 +99,13 @@ useEffect(() => {
         .eq("giver_id", userRow.id)
         .eq("revealed", true);
 
-      console.log("Fetched pairings:", pairings);
-
-
       if (pairings?.length > 0) {
         const receiverIds = pairings.map(p => p.receiver_id);
 
         // Fetch all receiver users
         const { data: receivers } = await supabase
-          .from("users")
-          .select("id, username, role")
-          .in("id", receiverIds);
+          .from("public_revealed_recipients")
+          .select("*")
 
         if (receivers?.length > 0) {
           // Separate adult and child receivers

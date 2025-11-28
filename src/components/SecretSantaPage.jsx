@@ -55,6 +55,7 @@ export default function SecretSantaPage({ user }) {
 
   // Fetch username + wishlist + all pairings
 useEffect(() => {
+  console.log("Secret Santa effect triggered", user);
   const fetchInfo = async () => {
     try {
       // Use auth UID instead of parsing email (safer)

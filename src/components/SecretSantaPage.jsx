@@ -292,40 +292,37 @@ useEffect(() => {
       {error && <p className="error">{error}</p>}
     </div>
 
-    {/* Adult recipient */}
-    {assignedTo && (
-      <div className="receiverCard">
-        <h2>{assignedTo}'s Wishlist 🎁</h2>
-        {receiverWishlist.length === 0 ? (
+{/* Adult recipient */}
+{receiverWishlist && receiverWishlist.length > 0 && assignedTo && (
+  <div className="receiverCard">
+    <h2>{assignedTo}'s Wishlist 🎁</h2>
+    <ul>
+      {receiverWishlist.map((item, i) => (
+        <li key={i}>{item || "—"}</li>
+      ))}
+    </ul>
+  </div>
+)}
+
+{/* Children recipients */}
+{childrenReceivers && childrenReceivers.length > 0 && (
+  <div className="receiverCard">
+    <h2>Children Assigned To You 🎁</h2>
+    {childrenReceivers.map((child, idx) => (
+      <div key={idx} className="childWishlist">
+        <h3>{child.username}'s Wishlist:</h3>
+        {child.wishlist.length === 0 ? (
           <p>No wishlist available.</p>
         ) : (
           <ul>
-            {receiverWishlist.map((item, i) => (
-              <li key={i}>{item}</li>
+            {child.wishlist.map((item, i) => (
+              <li key={i}>{item || "—"}</li>
             ))}
           </ul>
         )}
       </div>
-    )}
+    ))}
 
-    {/* Children recipients */}
-    {childrenReceivers && childrenReceivers.length > 0 && (
-      <div className="receiverCard">
-        <h2>Children Assigned To You 🎁</h2>
-        {childrenReceivers.map(child => (
-          <div key={child.id} className="childWishlist">
-            <h3>{child.username}'s Wishlist:</h3>
-            {child.items.length === 0 ? (
-              <p>No wishlist available.</p>
-            ) : (
-              <ul>
-                {child.items.slice(0, 3).map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ))}
       </div>
     )}
   </div>

@@ -52,93 +52,114 @@ export default function SecretSantaPage({ user }) {
     return () => clearInterval(interval);
   }, [revealDate]);
 
-  // Fetch username + wishlist + pairing
-  useEffect(() => {
-    const fetchInfo = async () => {
-      try {
-        // Extract username from email (e.g., john@example.com → john)
-        let usernameFromEmail = user.email?.split("@")[0] || "";
-        usernameFromEmail = usernameFromEmail.toLowerCase();
-        
-        const { data: userRow, error: userErr } = await supabase
-          .from("users")
-          .select("*")
-          .eq("username", usernameFromEmail)
-          .maybeSingle();
-
-        if (userErr || !userRow) {
-          setUsername(usernameFromEmail);
-          setUserId(null);
-          setWishlist(["", "", ""]);
-          setEditableWishlist(["", "", ""]);
-          return;
-        }
-
-        setUsername(userRow.username);
-        setUserId(userRow.id); // Store the user ID for later use
-
-        // Fetch wishlist
-        const { data: wishlistData } = await supabase
-          .from("wishlists")
-          .select("items")
-          .eq("user_id", userRow.id)
-          .maybeSingle();
-
-        if (wishlistData?.items) {
-          const top3 = wishlistData.items.slice(0, 3);
-          while (top3.length < 3) top3.push("");
-          setWishlist(top3);
-          setEditableWishlist(top3);
-        }
-        else {
-          setWishlist(["", "", ""]);
-          setEditableWishlist(["", "", ""]);
-        }
-
-        // Fetch pairing (if revealed)
-        const { data: pairing } = await supabase
-          .from("pairings")
-          .select("receiver_id, revealed")
-          .eq("giver_id", userRow.id)
-          .maybeSingle();
-
-        if (pairing && pairing.revealed) {
-      const { data: receiver } = await supabase
+  // Fetch username + wishlist + all pairings
+useEffect(() => {
+  const fetchInfo = async () => {
+    try {
+      // Use auth UID instead of parsing email (safer)
+      const { data: userRow, error: userErr } = await supabase
         .from("users")
-        .select("id, username")
-        .eq("id", pairing.receiver_id)
+        .select("*")
+        .eq("auth_uid", user.id)
         .maybeSingle();
 
-      if (receiver) {
-        setAssignedTo(receiver.username);
+      if (userErr || !userRow) {
+        setUsername(user.email?.split("@")[0] || "User");
+        setUserId(null);
+        setWishlist(["", "", ""]);
+        setEditableWishlist(["", "", ""]);
+        return;
+      }
 
-        // fetch receiver wishlist
-        const { data: rWish } = await supabase
-          .from("wishlists")
-          .select("items")
-          .eq("user_id", receiver.id)
-          .maybeSingle();
+      setUsername(userRow.username);
+      setUserId(userRow.id);
 
-        if (rWish?.items) {
-          const top3 = rWish.items.slice(0, 3);
-          while (top3.length < 3) top3.push("");
-          setReceiverWishlist(top3);
-        } else {
-          setReceiverWishlist(["", "", ""]);
+      // Fetch wishlist
+      const { data: wishlistData } = await supabase
+        .from("wishlists")
+        .select("items")
+        .eq("user_id", userRow.id)
+        .maybeSingle();
+
+      if (wishlistData?.items) {
+        const top3 = wishlistData.items.slice(0, 3);
+        while (top3.length < 3) top3.push("");
+        setWishlist(top3);
+        setEditableWishlist(top3);
+      } else {
+        setWishlist(["", "", ""]);
+        setEditableWishlist(["", "", ""]);
+      }
+
+      // Fetch all revealed pairings for this user
+      const { data: pairings } = await supabase
+        .from("pairings")
+        .select("receiver_id")
+        .eq("giver_id", userRow.id)
+        .eq("revealed", true);
+
+      if (pairings?.length > 0) {
+        const receiverIds = pairings.map(p => p.receiver_id);
+
+        // Fetch all receiver users
+        const { data: receivers } = await supabase
+          .from("users")
+          .select("id, username, role")
+          .in("id", receiverIds);
+
+        if (receivers?.length > 0) {
+          // Separate adult and child receivers
+          const adultReceiver = receivers.find(r => r.role === 'adult');
+          const childReceivers = receivers.filter(r => r.role === 'child');
+
+          // Set adult assignment and wishlist
+          if (adultReceiver) {
+            setAssignedTo(adultReceiver.username);
+
+            const { data: adultWishlist } = await supabase
+              .from("wishlists")
+              .select("items")
+              .eq("user_id", adultReceiver.id)
+              .maybeSingle();
+
+            if (adultWishlist?.items) {
+              const top3 = adultWishlist.items.slice(0, 3);
+              while (top3.length < 3) top3.push("");
+              setReceiverWishlist(top3);
+            } else {
+              setReceiverWishlist(["", "", ""]);
+            }
+          }
+
+          // Optional: set children receivers if you want to display them
+          if (childReceivers.length > 0) {
+            const childWishlists = await Promise.all(
+              childReceivers.map(async c => {
+                const { data: w } = await supabase
+                  .from("wishlists")
+                  .select("items")
+                  .eq("user_id", c.id)
+                  .maybeSingle();
+                return { id: c.id, username: c.username, items: w?.items || [] };
+              })
+            );
+            // Store in a state if you want to render separately
+            // setChildrenReceivers(childWishlists);
+          }
         }
       }
+
+    } catch (err) {
+      console.error("Error fetching Secret Santa info:", err);
+      setUsername(user.email?.split("@")[0] || "User");
+      setWishlist(["", "", ""]);
+      setEditableWishlist(["", "", ""]);
     }
+  };
 
-          } catch (err) {
-            const usernameFromEmail = user.email?.split("@")[0] || "User";
-            setUsername(usernameFromEmail);
-            setWishlist(["", "", ""]);
-            setEditableWishlist(["", "", ""]);
-          }
-        };
+  fetchInfo();
+}, [user.id, user.email]);
 
-        fetchInfo();
-      }, [user.id, user.email]);
 
   // Auto-save wishlist to Supabase
   const saveWishlist = async (items) => {
@@ -197,75 +218,76 @@ export default function SecretSantaPage({ user }) {
   // styles are in SecretSantaPage.css
 
   return (
-    <div className="container twoColumnLayout">
-      <button onClick={handleLogout} className="logoutButton">
-        Logout
-      </button>
+  <div className="container twoColumnLayout">
+    <button onClick={handleLogout} className="logoutButton">
+      Logout
+    </button>
 
-      <div className="snow">
-        {snowflakes.map((flake, i) => (
-          <div
-            key={i}
-            className="snowflake"
-            style={{
-              left: `${flake.left}px`,
-              width: `${flake.size}px`,
-              height: `${flake.size}px`,
-              opacity: flake.opacity,
-              animationDuration: `${flake.duration}s`,
-              animationDelay: `${flake.delay}s`
-            }}
+    <div className="snow">
+      {snowflakes.map((flake, i) => (
+        <div
+          key={i}
+          className="snowflake"
+          style={{
+            left: `${flake.left}px`,
+            width: `${flake.size}px`,
+            height: `${flake.size}px`,
+            opacity: flake.opacity,
+            animationDuration: `${flake.duration}s`,
+            animationDelay: `${flake.delay}s`
+          }}
+        />
+      ))}
+    </div>
+
+    <div className="card">
+      <h1>Welcome, {username} 🎄</h1>
+
+      {assignedTo ? (
+        <>
+          <p>Your Secret Santa person is:</p>
+          <h2 className="assignedTo">{assignedTo}</h2>
+        </>
+      ) : (
+        <>
+          <p>Secret Santa Reveal In:</p>
+          <h2>{timeLeft}</h2>
+        </>
+      )}
+
+      <div className="wishlist">
+        <h3>Your Wishlist (Top 3):</h3>
+        {wishlist.length === 0 ? (
+          <p>No wishlist items added.</p>
+        ) : (
+          <ul>
+            {wishlist.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Editable wishlist box */}
+      <div className="editableWishlist">
+        <h3>Edit Your Wishlist:</h3>
+        {editableWishlist.map((item, index) => (
+          <input
+            key={index}
+            type="text"
+            value={item}
+            onChange={(e) => handleWishlistChange(e.target.value, index)}
+            className="wishlistInput"
+            maxLength={100}
           />
         ))}
       </div>
 
- 
-      <div className="card">
-        <h1>Welcome, {username} 🎄</h1>
+      {error && <p className="error">{error}</p>}
+    </div>
 
-        {assignedTo ? (
-          <>
-            <p>Your Secret Santa person is:</p>
-            <h2 className="assignedTo">{assignedTo}</h2>
-          </>
-        ) : (
-          <>
-            <p>Secret Santa Reveal In:</p>
-            <h2>{timeLeft}</h2>
-          </>
-        )}
-
-        <div className="wishlist">
-          <h3>Your Wishlist (Top 3):</h3>
-          {wishlist.length === 0 ? (
-            <p>No wishlist items added.</p>
-          ) : (
-            <ul>
-              {wishlist.map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* Editable wishlist box */}
-        <div className="editableWishlist">
-          <h3>Edit Your Wishlist:</h3>
-          {editableWishlist.map((item, index) => (
-            <input
-              key={index}
-              type="text"
-              value={item}
-              onChange={(e) => handleWishlistChange(e.target.value, index)}
-              className="wishlistInput"
-              maxLength={100}
-            />
-          ))}
-        </div>
-          {error && <p className="error">{error}</p>}
-      </div>
-
-      {assignedTo && (
+    {/* Adult recipient */}
+    {assignedTo && (
       <div className="receiverCard">
         <h2>{assignedTo}'s Wishlist 🎁</h2>
         {receiverWishlist.length === 0 ? (
@@ -279,6 +301,27 @@ export default function SecretSantaPage({ user }) {
         )}
       </div>
     )}
-    </div>
-  );
+
+    {/* Children recipients */}
+    {childrenReceivers && childrenReceivers.length > 0 && (
+      <div className="receiverCard">
+        <h2>Children Assigned To You 🎁</h2>
+        {childrenReceivers.map(child => (
+          <div key={child.id} className="childWishlist">
+            <h3>{child.username}'s Wishlist:</h3>
+            {child.items.length === 0 ? (
+              <p>No wishlist available.</p>
+            ) : (
+              <ul>
+                {child.items.slice(0, 3).map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+);
 }

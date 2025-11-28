@@ -121,13 +121,9 @@ useEffect(() => {
               .eq("user_id", adultReceiver.id)
               .maybeSingle();
 
-            if (adultWishlist?.items) {
-              const top3 = adultWishlist.items.slice(0, 3);
-              while (top3.length < 3) top3.push("");
-              setReceiverWishlist(top3);
-            } else {
-              setReceiverWishlist(["", "", ""]);
-            }
+              const adultTop3 = adultWishlist?.items?.slice(0, 3) || [];
+              while (adultTop3.length < 3) adultTop3.push("—");
+              setReceiverWishlist(adultTop3);
           }
 
           console.log("pairings:", pairings);
@@ -145,6 +141,9 @@ useEffect(() => {
                   .select("items")
                   .eq("user_id", c.id)
                   .maybeSingle();
+
+                   const items = wishlistData?.items?.slice(0, 3) || [];
+                    while (items.length < 3) items.push("—");
                 return { id: c.id, username: c.username, items: w?.items || [] };
               })
             );

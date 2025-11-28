@@ -268,7 +268,6 @@ export default function SecretSantaPage({ user }) {
       {assignedTo && (
       <div className="receiverCard">
         <h2>{assignedTo}'s Wishlist 🎁</h2>
-
         {receiverWishlist.length === 0 ? (
           <p>No wishlist available.</p>
         ) : (

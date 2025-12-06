@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import './LandingPage.css'
 import { supabase } from '../supabaseClient'
+import { FaEye, FaEyeSlash } from 'react-icons/fa'
 
 export default function LandingPage({ onLogin }) {
   const [username, setUsername] = useState('')
@@ -61,25 +62,26 @@ export default function LandingPage({ onLogin }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            style={{ paddingRight: '40px' }}
+            style={{ 
+              width: '100%',
+              height: '40px',
+              paddingRight: '40px' }}
 
           />
-          <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          style={{
-            position: "absolute",
-            right: "10px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontSize: "14px"
-          }}
-        >
-          {showPassword ? "Hide" : "Show"}
-        </button>
+        <span
+        onClick={() => setShowPassword((prev) => !prev)}
+        style={{
+          position: "absolute",
+          right: "10px",
+          top: "50%",
+          transform: "translateY(-50%)",
+          cursor: "pointer",
+          color: "gray",
+          fontSize: "18px"
+        }}
+      >
+        {showPassword ? <FaEyeSlash /> : <FaEye />}
+      </span>
           <button type="submit" disabled={loading}>
             Sign In
           </button>

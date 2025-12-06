@@ -7,6 +7,7 @@ export default function LandingPage({ onLogin }) {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -28,7 +29,7 @@ export default function LandingPage({ onLogin }) {
       onLogin(data.user);
     } catch (err) {
       console.error(err);
-      setError('An unexpected error occurred.');
+      setError('An unexpected error occurred.');        
     } finally {
       setLoading(false);
     }
@@ -55,12 +56,30 @@ export default function LandingPage({ onLogin }) {
             required
           />
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            style={{ paddingRight: '40px' }}
+
           />
+          <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          style={{
+            position: "absolute",
+            right: "10px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "14px"
+          }}
+        >
+          {showPassword ? "Hide" : "Show"}
+        </button>
           <button type="submit" disabled={loading}>
             Sign In
           </button>

@@ -56,6 +56,7 @@ export default function LandingPage({ onLogin }) {
             onChange={(e) => setUsername(e.target.value)}
             required
           />
+          <div style={{ position: "relative", width: "100%" }}>
           <input
             type={showPassword ? "text" : "password"}
             placeholder="Password"
@@ -82,6 +83,7 @@ export default function LandingPage({ onLogin }) {
       >
         {showPassword ? <FaEyeSlash /> : <FaEye />}
       </span>
+          </div>
           <button type="submit" disabled={loading}>
             Sign In
           </button>
